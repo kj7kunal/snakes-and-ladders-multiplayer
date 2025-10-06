@@ -15,6 +15,9 @@ firebase-debug.*.log*
 .env.production.local
 config.txt
 
+# Firebase configuration with real API keys - NEVER commit!
+src/modules/firebase-config.js
+
 # Firebase cache
 .firebase/
 

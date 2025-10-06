@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snakes & Ladders – Online Multiplayer (6 players)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --panel:#121830; --accent:#7c5cff; --accent2:#27d1ff; --muted:#aab3d0 }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1020,#0f1430);color:#e8edff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .app{max-width:1100px;margin:0 auto;padding:16px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 120deg,#7c5cff,#27d1ff);box-shadow:0 0 16px #7c5cff55}
+    h1{font-size:20px;margin:0}
+    .panels{display:grid;grid-template-columns:330px 1fr;gap:14px}
+    @media (max-width: 900px){.panels{grid-template-columns:1fr}}
+    .panel{background:var(--panel);border:1px solid #24306a;border-radius:14px;padding:14px;box-shadow:0 10px 30px #00000040}
+    .panel h2{font-size:14px;text-transform:uppercase;letter-spacing:.12em;color:#bcd0ff80;margin:0 0 8px}
+    .row{display:flex;gap:8px;align-items:center;margin:6px 0}
+    input,select,button{font:inherit}
+    input[type=text]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2b3a7a;background:#0e1430;color:#e8edff}
+    select{padding:10px 12px;border-radius:10px;border:1px solid #2b3a7a;background:#0e1430;color:#e8edff}
+    button{padding:10px 12px;border-radius:10px;border:1px solid #2b3a7a;background:#18204a;color:#e8edff;cursor:pointer;transition:box-shadow .15s}
+    button.primary{background:linear-gradient(180deg,#7c5cff,#5b3bff);border-color:#6749ff}
+    button.ghost{background:#0e1430}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    button.active{box-shadow:0 0 0 2px #27d1ff88}
+    .tag{font-size:12px;padding:4px 8px;border-radius:8px;background:#0e1430;border:1px solid #2b3a7a;color:#cdd7ff}
+    .players{display:flex;flex-direction:column;gap:8px}
+    .player{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#0e1430;border:1px solid #2b3a7a;justify-content:space-between}
+    .dot{width:10px;height:10px;border-radius:50%}
+
+    .board-wrap{position:relative}
+    canvas{width:100%;height:auto;background:#0a0f25;border-radius:14px;border:1px solid #24306a}
+
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+    .power{padding:6px 8px;border-radius:10px;border:1px dashed #3852b5;background:#0e1430}
+
+    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#16214a;color:#e8edff;border:1px solid #2b3a7a;border-radius:12px;padding:10px 14px;box-shadow:0 12px 30px #00000066;z-index:50}
+    .status{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .section{margin:10px 0 8px;border-top:1px dashed #2b3a7a;padding-top:8px}
+    .small{font-size:12px;color:#cdd7ff99}
+    .list{display:flex;flex-direction:column;gap:8px}
+    ul.clean{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+    .emoji-btn{padding:4px 8px;border-radius:6px;background:#0e1430;border:1px solid #2b3a7a;font-size:16px;cursor:pointer;transition:background .15s}
+    .emoji-btn:hover{background:#18204a}
+    
+    .floating-comment{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#7c5cff,#5b3bff);color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 10px 30px #7c5cff44;z-index:100;font-weight:600;pointer-events:none;animation:fadeInOut 2s ease-in-out}
+    
+    @keyframes fadeInOut{0%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}}
+    .item{display:flex;align-items:center;gap:8px}
+    .pill{padding:4px 8px;border:1px solid #2b3a7a;border-radius:8px;background:#0e1430}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Snakes & Ladders – Online (up to 6)</h1>
+          <div class="small">Lobby ▶ Placement ▶ Play. Each player places snakes 🐍, ladders 🪜, and a mystery box 🎁 (choose its power).</div>
+        </div>
+      </div>
+      <div class="status" id="statusBar">
+        <span class="tag" id="youTag">Not signed in</span>
+        <span class="tag" id="roomTag">Room: —</span>
+        <span class="tag" id="phaseTag">Phase: —</span>
+      </div>
+    </header>
+
+    <div class="panels">
+      <div class="panel" id="leftPanel">
+        <h2>Players</h2>
+        <div class="players" id="players"></div>
+
+        <div class="section" id="authBlock">
+          <h2>Room</h2>
+          <div class="row"><input id="displayName" type="text" placeholder="Your name (or leave for random)"/></div>
+          <div class="row"><input id="colorPick" type="color" value="#ff6b6b" title="Preferred color (auto-unique)"/></div>
+          <div class="row" style="gap:10px">
+            <input id="joinCode" type="text" placeholder="ROOM CODE (A–Z / 0–9, 6 chars)" style="max-width:220px"/>
+            <button class="ghost" id="createRoomBtn" disabled>Create Room</button>
+            <button class="primary" id="joinRoomBtn" disabled>Join</button>
+          </div>
+          <div class="small">Hosted on Firebase (Anonymous Auth + Firestore). Share the 6-letter code.</div>
+        </div>
+
+        <div id="lobbyControls" class="section" style="display:none">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row">
+              <button class="ghost" id="copyLinkBtn" title="Copy invite link">Copy Link</button>
+              <button class="primary" id="startPlacementBtn" disabled>Start Placement</button>
+            </div>
+            <div class="row">
+              <button class="ghost" id="resetRoomBtn" title="Host: reset">Reset</button>
+              <button class="ghost" id="deleteRoomBtn" title="Host: delete">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="placementBlock" class="section" style="display:none">
+          <h2>Placement</h2>
+          <div class="small">1) Ladders (bottom→top) — 2 total. 2) Snakes (top→bottom) — 2 total. 3) Choose a box power & cell — 1 total.
+            Click an item in the list to delete it. During placement you only see your own items.
+          </div>
+          <div class="row" style="flex-wrap:wrap; gap:8px">
+            <button id="placeLadderBtn">Place Ladder</button>
+            <button id="placeSnakeBtn">Place Snake</button>
+            <select id="boxPower">
+              <option value="BOOST">BOOST (+2)</option>
+              <option value="REROLL">REROLL (best of two)</option>
+              <option value="SHIELD">SHIELD (ignore next snake)</option>
+              <option value="SWAP_LEADER">SWAP_LEADER</option>
+              <option value="MINI_LEAP">MINI_LEAP (+6)</option>
+            </select>
+            <button id="placeBoxBtn">Place Mystery Box</button>
+            <button class="ghost" id="readyBtn">I'm Ready</button>
+            <button class="primary" id="startGameBtn" style="margin-left:auto; display:none">Start Game</button>
+          </div>
+          <div class="small">Your placements:</div>
+          <ul class="clean" id="myPlacementList"></ul>
+        </div>
+
+        <div id="playBlock" class="section" style="display:none">
+          <h2>Play</h2>
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div>
+              <div class="small">Turn: <span id="turnText">—</span></div>
+              <div class="toolbar" id="powerBar"></div>
+              <div class="row">
+                <button class="primary" id="rollBtn" disabled>Roll Dice</button>
+                <span class="tag" id="lastRoll">—</span>
+              </div>
+            </div>
+            <div class="row"><button id="leaveBtn">Leave</button></div>
+          </div>
+          
+          <!-- Emoji Bar -->
+          <div class="section">
+            <div class="small">Quick Reactions:</div>
+            <div class="toolbar" id="emojiBar">
+              <button class="emoji-btn" data-emoji="😂">😂</button>
+              <button class="emoji-btn" data-emoji="😭">😭</button>
+              <button class="emoji-btn" data-emoji="😮">😮</button>
+              <button class="emoji-btn" data-emoji="🎉">🎉</button>
+              <button class="emoji-btn" data-emoji="🔥">🔥</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section small">
+          <div>Rules:</div>
+          <ul>
+            <li>Exact 100 required to win.</li>
+            <li>Snakes pull head→tail; ladders push foot→top.</li>
+            <li>Max 6 players; token color per player.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel board-wrap">
+        <h2>Board</h2>
+        <canvas id="board" width="900" height="900"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" style="display:none"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  
+  <!-- Modular JS: main entrypoint -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

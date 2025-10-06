@@ -22,19 +22,17 @@ cd Snakes_and_ladders
 ### 2. Firebase Setup
 1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
 2. Enable Firestore Database and Authentication (Anonymous)
-3. Copy `.env.example` to `.env`
-4. Fill in your Firebase configuration values in `.env`
+3. Get your Firebase configuration from Project Settings
+4. Copy the example config file and update with your Firebase project values:
+   ```bash
+   cp src/modules/firebase-config.example.js src/modules/firebase-config.js
+   ```
+   Then edit `src/modules/firebase-config.js` with your actual Firebase configuration.
 
-### 3. Environment Variables
-Create a `.env` file with your Firebase configuration:
-```env
-VITE_FIREBASE_API_KEY=your_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
+### 3. Configuration
+The Firebase configuration is handled through `src/modules/firebase-config.js` which you create from the example file. This file is git-ignored to prevent accidentally committing API keys to version control.
+
+> **Note**: While Firebase client config values are generally safe to expose publicly (security is handled by Firestore rules), it's still a best practice to keep them out of version control.
 
 ### 4. Deploy
 ```bash
